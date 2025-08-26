@@ -1,0 +1,735 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verificador de Etiquetas HTML</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+            animation: slideIn 0.6s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.3);
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-size: 1.1em;
+        }
+
+        .main-content {
+            padding: 30px;
+        }
+
+        .input-section {
+            margin-bottom: 30px;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        textarea {
+            width: 100%;
+            min-height: 300px;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            line-height: 1.5;
+            resize: vertical;
+            transition: border-color 0.3s ease;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .file-input-wrapper {
+            position: relative;
+            display: inline-block;
+            margin-bottom: 15px;
+        }
+
+        .file-input {
+            opacity: 0;
+            position: absolute;
+            z-index: -1;
+        }
+
+        .file-label {
+            display: inline-block;
+            padding: 12px 24px;
+            background: #667eea;
+            color: white;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+        }
+
+        .file-label:hover {
+            background: #5a6fd8;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .analyze-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-right: 10px;
+        }
+
+        .analyze-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .clear-btn {
+            background: #6c757d;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .clear-btn:hover {
+            background: #5a6268;
+            transform: translateY(-2px);
+        }
+
+        .results {
+            margin-top: 30px;
+            display: none;
+            animation: fadeIn 0.5s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .status-card {
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            border-left: 5px solid;
+            font-weight: 600;
+            font-size: 1.1em;
+        }
+
+        .status-success {
+            background: #d1edff;
+            border-color: #28a745;
+            color: #155724;
+        }
+
+        .status-error {
+            background: #f8d7da;
+            border-color: #dc3545;
+            color: #721c24;
+        }
+
+        .status-warning {
+            background: #fff3cd;
+            border-color: #ffc107;
+            color: #856404;
+        }
+
+        .tags-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+
+        .tag-card {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid #e9ecef;
+            transition: all 0.3s ease;
+        }
+
+        .tag-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        }
+
+        .tag-name {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #495057;
+            margin-bottom: 10px;
+        }
+
+        .tag-count {
+            font-size: 1.1em;
+        }
+
+        .balanced {
+            color: #28a745;
+            font-weight: 600;
+        }
+
+        .unbalanced {
+            color: #dc3545;
+            font-weight: bold;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.7; }
+            100% { opacity: 1; }
+        }
+
+        .details-section {
+            margin-top: 30px;
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 12px;
+        }
+
+        .error-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .error-item {
+            background: white;
+            margin: 10px 0;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #dc3545;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .line-info {
+            font-size: 0.9em;
+            color: #6c757d;
+            margin-top: 5px;
+        }
+
+        code {
+            background: #e9ecef;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+        }
+
+        .stats-summary {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .stat-item {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease;
+        }
+
+        .stat-item:hover {
+            transform: scale(1.05);
+        }
+
+        .stat-number {
+            font-size: 2em;
+            font-weight: bold;
+            color: #667eea;
+            display: block;
+        }
+
+        .stat-label {
+            color: #6c757d;
+            font-size: 0.9em;
+            margin-top: 5px;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+            color: #667eea;
+        }
+
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔍 Verificador de Etiquetas HTML</h1>
+            <p>Analiza automáticamente el balance y estructura de tus etiquetas HTML</p>
+        </div>
+        
+        <div class="main-content">
+            <div class="input-section">
+                <div class="input-group">
+                    <div class="file-input-wrapper">
+                        <input type="file" id="fileInput" class="file-input" accept=".html,.php,.htm">
+                        <label for="fileInput" class="file-label">📁 Cargar archivo HTML/PHP</label>
+                    </div>
+                    <div id="fileName" style="margin-top: 10px; color: #667eea; font-weight: 600;"></div>
+                </div>
+                
+                <div class="input-group">
+                    <label for="htmlContent">O pega tu código HTML aquí:</label>
+                    <textarea id="htmlContent" placeholder="Pega tu código HTML aquí para analizar..."></textarea>
+                </div>
+                
+                <div class="button-group">
+                    <button id="analyzeBtn" class="analyze-btn">🔍 Analizar HTML</button>
+                    <button id="clearBtn" class="clear-btn">🗑️ Limpiar</button>
+                </div>
+            </div>
+
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                <p>Analizando etiquetas HTML...</p>
+            </div>
+
+            <div class="results" id="results">
+                <div id="overallStatus"></div>
+                
+                <div class="stats-summary" id="statsSummary"></div>
+                
+                <div class="tags-grid" id="tagsGrid"></div>
+                
+                <div class="details-section" id="detailsSection"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class HTMLTagValidator {
+            constructor() {
+                this.selfClosingTags = [
+                    'area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input',
+                    'link', 'meta', 'param', 'source', 'track', 'wbr'
+                ];
+                this.voidElements = [...this.selfClosingTags];
+            }
+
+            analyze(html) {
+                const results = {
+                    isValid: true,
+                    errors: [],
+                    warnings: [],
+                    tagCounts: {},
+                    totalTags: 0,
+                    balancedTags: 0,
+                    unbalancedTags: 0,
+                    structure: []
+                };
+
+                // Remover comentarios y contenido de script/style
+                const cleanHtml = this.cleanHTML(html);
+                
+                // Encontrar todas las etiquetas
+                const tagRegex = /<\/?([a-zA-Z][a-zA-Z0-9]*)\b[^>]*>/g;
+                const tags = [];
+                let match;
+
+                while ((match = tagRegex.exec(cleanHtml)) !== null) {
+                    const fullTag = match[0];
+                    const tagName = match[1].toLowerCase();
+                    const isClosing = fullTag.startsWith('</');
+                    const isSelfClosing = fullTag.endsWith('/>') || this.voidElements.includes(tagName);
+                    
+                    tags.push({
+                        name: tagName,
+                        fullTag: fullTag,
+                        isClosing: isClosing,
+                        isSelfClosing: isSelfClosing,
+                        position: match.index,
+                        line: this.getLineNumber(cleanHtml, match.index)
+                    });
+                }
+
+                // Contar etiquetas
+                this.countTags(tags, results);
+                
+                // Verificar balance
+                this.checkBalance(tags, results);
+                
+                // Verificar estructura anidada
+                this.checkNesting(tags, results);
+
+                return results;
+            }
+
+            cleanHTML(html) {
+                // Remover comentarios HTML
+                html = html.replace(/<!--[\s\S]*?-->/g, '');
+                
+                // Remover contenido de script y style
+                html = html.replace(/<script[\s\S]*?<\/script>/gi, '');
+                html = html.replace(/<style[\s\S]*?<\/style>/gi, '');
+                
+                // Remover contenido PHP
+                html = html.replace(/<\?php[\s\S]*?\?>/g, '');
+                html = html.replace(/<\?[\s\S]*?\?>/g, '');
+                
+                return html;
+            }
+
+            getLineNumber(text, position) {
+                return text.substring(0, position).split('\n').length;
+            }
+
+            countTags(tags, results) {
+                const counts = {};
+                
+                tags.forEach(tag => {
+                    if (!counts[tag.name]) {
+                        counts[tag.name] = { opening: 0, closing: 0, selfClosing: 0 };
+                    }
+                    
+                    if (tag.isSelfClosing) {
+                        counts[tag.name].selfClosing++;
+                    } else if (tag.isClosing) {
+                        counts[tag.name].closing++;
+                    } else {
+                        counts[tag.name].opening++;
+                    }
+                });
+
+                results.tagCounts = counts;
+                results.totalTags = tags.length;
+            }
+
+            checkBalance(tags, results) {
+                for (const [tagName, count] of Object.entries(results.tagCounts)) {
+                    if (this.voidElements.includes(tagName)) {
+                        // Elementos void no necesitan cierre
+                        if (count.opening + count.selfClosing > 0) {
+                            results.balancedTags++;
+                        }
+                    } else {
+                        // Elementos normales deben estar balanceados
+                        if (count.opening === count.closing) {
+                            results.balancedTags++;
+                        } else {
+                            results.unbalancedTags++;
+                            results.isValid = false;
+                            
+                            const diff = count.opening - count.closing;
+                            if (diff > 0) {
+                                results.errors.push({
+                                    type: 'unbalanced',
+                                    message: `La etiqueta <${tagName}> tiene ${diff} apertura(s) sin cerrar`,
+                                    tag: tagName,
+                                    expected: count.opening,
+                                    found: count.closing
+                                });
+                            } else {
+                                results.errors.push({
+                                    type: 'unbalanced',
+                                    message: `La etiqueta <${tagName}> tiene ${Math.abs(diff)} cierre(s) extra`,
+                                    tag: tagName,
+                                    expected: count.opening,
+                                    found: count.closing
+                                });
+                            }
+                        }
+                    }
+                }
+            }
+
+            checkNesting(tags, results) {
+                const stack = [];
+                const nestingErrors = [];
+
+                tags.forEach(tag => {
+                    if (tag.isSelfClosing || this.voidElements.includes(tag.name)) {
+                        return; // Skip self-closing tags
+                    }
+
+                    if (tag.isClosing) {
+                        if (stack.length === 0) {
+                            nestingErrors.push({
+                                type: 'unexpected_closing',
+                                message: `Etiqueta de cierre </${tag.name}> encontrada sin apertura correspondiente`,
+                                tag: tag.name,
+                                line: tag.line
+                            });
+                        } else {
+                            const lastOpen = stack[stack.length - 1];
+                            if (lastOpen.name === tag.name) {
+                                stack.pop(); // Correct nesting
+                            } else {
+                                nestingErrors.push({
+                                    type: 'incorrect_nesting',
+                                    message: `Anidamiento incorrecto: se esperaba </${lastOpen.name}> pero se encontró </${tag.name}>`,
+                                    expected: lastOpen.name,
+                                    found: tag.name,
+                                    line: tag.line
+                                });
+                            }
+                        }
+                    } else {
+                        stack.push(tag); // Opening tag
+                    }
+                });
+
+                // Etiquetas que quedaron abiertas
+                stack.forEach(tag => {
+                    nestingErrors.push({
+                        type: 'unclosed',
+                        message: `Etiqueta <${tag.name}> abierta en línea ${tag.line} nunca se cerró`,
+                        tag: tag.name,
+                        line: tag.line
+                    });
+                });
+
+                results.errors.push(...nestingErrors);
+                if (nestingErrors.length > 0) {
+                    results.isValid = false;
+                }
+            }
+        }
+
+        // Inicializar la aplicación
+        document.addEventListener('DOMContentLoaded', function() {
+            const validator = new HTMLTagValidator();
+            const fileInput = document.getElementById('fileInput');
+            const htmlContent = document.getElementById('htmlContent');
+            const analyzeBtn = document.getElementById('analyzeBtn');
+            const clearBtn = document.getElementById('clearBtn');
+            const results = document.getElementById('results');
+            const loading = document.getElementById('loading');
+            const fileName = document.getElementById('fileName');
+
+            // Manejar carga de archivo
+            fileInput.addEventListener('change', function(e) {
+                const file = e.target.files[0];
+                if (file) {
+                    fileName.textContent = `📄 ${file.name}`;
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        htmlContent.value = e.target.result;
+                    };
+                    reader.readAsText(file);
+                }
+            });
+
+            // Manejar análisis
+            analyzeBtn.addEventListener('click', function() {
+                const content = htmlContent.value.trim();
+                if (!content) {
+                    alert('Por favor, introduce o carga contenido HTML para analizar.');
+                    return;
+                }
+
+                showLoading(true);
+                
+                // Simular procesamiento asíncrono
+                setTimeout(() => {
+                    const analysisResults = validator.analyze(content);
+                    displayResults(analysisResults);
+                    showLoading(false);
+                }, 1000);
+            });
+
+            // Manejar limpiar
+            clearBtn.addEventListener('click', function() {
+                htmlContent.value = '';
+                fileInput.value = '';
+                fileName.textContent = '';
+                results.style.display = 'none';
+            });
+
+            function showLoading(show) {
+                loading.style.display = show ? 'block' : 'none';
+                results.style.display = show ? 'none' : 'block';
+            }
+
+            function displayResults(analysisResults) {
+                const { isValid, errors, tagCounts, totalTags, balancedTags, unbalancedTags } = analysisResults;
+
+                // Estado general
+                const statusDiv = document.getElementById('overallStatus');
+                statusDiv.className = `status-card ${isValid ? 'status-success' : 'status-error'}`;
+                statusDiv.innerHTML = `
+                    <div style="font-size: 1.3em;">
+                        ${isValid ? '✅ HTML VÁLIDO' : '❌ HTML CON ERRORES'}
+                    </div>
+                    <div style="margin-top: 10px; font-weight: normal;">
+                        ${isValid 
+                            ? 'Todas las etiquetas están correctamente balanceadas y anidadas.' 
+                            : `Se encontraron ${errors.length} error(es) en la estructura HTML.`
+                        }
+                    </div>
+                `;
+
+                // Estadísticas resumidas
+                const statsDiv = document.getElementById('statsSummary');
+                statsDiv.innerHTML = `
+                    <div class="stat-item">
+                        <span class="stat-number">${totalTags}</span>
+                        <div class="stat-label">Total Etiquetas</div>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-number" style="color: #28a745;">${balancedTags}</span>
+                        <div class="stat-label">Etiquetas Balanceadas</div>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-number" style="color: #dc3545;">${unbalancedTags}</span>
+                        <div class="stat-label">Etiquetas Desbalanceadas</div>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-number">${Object.keys(tagCounts).length}</span>
+                        <div class="stat-label">Tipos de Etiquetas</div>
+                    </div>
+                `;
+
+                // Grid de etiquetas
+                const tagsGrid = document.getElementById('tagsGrid');
+                const tagCards = Object.entries(tagCounts)
+                    .sort(([a], [b]) => a.localeCompare(b))
+                    .map(([tagName, counts]) => {
+                        const isVoid = validator.voidElements.includes(tagName);
+                        const isBalanced = isVoid || counts.opening === counts.closing;
+                        
+                        let statusText = '';
+                        if (isVoid) {
+                            statusText = `${counts.opening + counts.selfClosing} elementos (auto-cerradas)`;
+                        } else {
+                            statusText = `${counts.opening} aperturas, ${counts.closing} cierres`;
+                        }
+
+                        return `
+                            <div class="tag-card">
+                                <div class="tag-name">&lt;${tagName}&gt;</div>
+                                <div class="tag-count ${isBalanced ? 'balanced' : 'unbalanced'}">
+                                    ${statusText}
+                                    ${isBalanced ? ' ✓' : ' ❌'}
+                                </div>
+                            </div>
+                        `;
+                    }).join('');
+
+                tagsGrid.innerHTML = tagCards;
+
+                // Detalles de errores
+                const detailsDiv = document.getElementById('detailsSection');
+                if (errors.length > 0) {
+                    const errorsList = errors.map(error => `
+                        <li class="error-item">
+                            <strong>${error.message}</strong>
+                            ${error.line ? `<div class="line-info">Línea: ${error.line}</div>` : ''}
+                        </li>
+                    `).join('');
+
+                    detailsDiv.innerHTML = `
+                        <h3 style="color: #dc3545; margin-bottom: 15px;">❌ Errores Encontrados (${errors.length})</h3>
+                        <ul class="error-list">${errorsList}</ul>
+                    `;
+                } else {
+                    detailsDiv.innerHTML = `
+                        <h3 style="color: #28a745; margin-bottom: 15px;">✅ No se encontraron errores</h3>
+                        <p style="color: #6c757d;">Tu código HTML tiene una estructura correcta y todas las etiquetas están balanceadas.</p>
+                    `;
+                }
+
+                results.style.display = 'block';
+            }
+
+            // Ejemplo inicial
+            htmlContent.placeholder = `Ejemplo de uso:
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Mi página</title>
+</head>
+<body>
+    <div class="container">
+        <h1>Título</h1>
+        <p>Contenido</p>
+    </div>
+</body>
+</html>`;
+        });
+    </script>
+</body>
+</html>
